@@ -8,10 +8,18 @@ var status = {
   FLAGGED: 2
 };
 
+var gameState = {
+  ONGOING: 0,
+  WON: 1,
+  LOST: 2
+};
+
 var Board = function(numRows, numCols, numBombs) {
   this.numRows = numRows || DEFAULT_NUM_ROWS;
   this.numCols = numCols || DEFAULT_NUM_COLS;
   this.numBombs = numBombs || DEFAULT_NUM_BOMBS;
+  this.state = gameState.ONGOING;
+  this.numClickedOrFlagged = 0;
 
   this.matrix = [];
   for (var r = 0; r < this.numRows; r++) {
@@ -100,5 +108,46 @@ Board.prototype.print = function(showAll) {
   }).join('\n'));
 };
 
+// ---- active methods ----
+
+Board.prototype.clickPosition = function(r, c) {
+  if (this.matrix[r][c].status === status.UNCLICKED) {
+    this.matrix[r][c].status = status.CLICKED;
+    if (this.matrix[r][c].isBomb) {
+      this.state = gameState.LOST;
+      return true;
+    }
+    this.numClickedOrFlagged++;
+    if (this.numClickedOrFlagged === this.numRows*this.numCols - this.numBombs) {
+      this.state = gameState.WON;
+    }
+    return true;
+  } else {
+    return false;
+  }
+};
+
+Board.prototype.flagPosition = function(r, c) {
+  if (this.matrix[r][c].status === status.UNCLICKED) {
+    this.matrix[r][c].status = status.FLAGGED;
+    this.numClickedOrFlagged++;
+    if (this.numClickedOrFlagged === this.numRows*this.numCols - this.numBombs) {
+      this.state = gameState.WON;
+    }
+    return true;
+  } else {
+    return false;
+  }
+};
+
+Board.prototype.unflagPosition = function(r, c) {
+  if (this.matrix[r][c].status === status.FLAGGED) {
+    this.matrix[r][c].status = status.UNCLICKED;
+    this.numClickedOrFlagged--;
+    return true;
+  } else {
+    return false;
+  }
+};
 
 module.exports = Board;
